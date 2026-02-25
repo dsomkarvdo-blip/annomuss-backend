@@ -1,14 +1,22 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { authMiddleware } from "../middleware/auth.js";
 import Post from "../models/Post.js";
+import fs from "fs";
 
 const router = express.Router();
 
-// Multer setup
+// ── Create uploads dir if not exists ─────────────────────────────
+const uploadsDir = "uploads/";
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// ── Multer setup ──────────────────────────────────────────────────
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, unique + path.extname(file.originalname));
@@ -17,7 +25,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|gif|webp|mp4|mov/;
     const ext = allowed.test(path.extname(file.originalname).toLowerCase());
@@ -27,7 +35,7 @@ const upload = multer({
   }
 });
 
-// POST /api/posts — create post or story
+// ── POST /api/posts ───────────────────────────────────────────────
 router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
   try {
     const { type, emotion, caption } = req.body;
@@ -36,8 +44,10 @@ router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
       return res.status(400).json({ message: "Type must be post or story" });
     }
 
+    const baseUrl = process.env.BACKEND_URL || "http://localhost:3000";
+
     const mediaUrl = req.file
-      ? `http://localhost:3000/uploads/${req.file.filename}`
+      ? `${baseUrl}/uploads/${req.file.filename}`
       : null;
 
     const mediaType = req.file
@@ -45,7 +55,7 @@ router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
       : null;
 
     const expiresAt = type === "story"
-      ? new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      ? new Date(Date.now() + 24 * 60 * 60 * 1000)
       : null;
 
     const post = await Post.create({
@@ -65,7 +75,7 @@ router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
   }
 });
 
-// GET /api/posts — get all posts (newest first)
+// ── GET /api/posts ────────────────────────────────────────────────
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const posts = await Post.find({ type: "post" })
@@ -77,7 +87,7 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/posts/stories — get active stories (not expired)
+// ── GET /api/posts/stories ────────────────────────────────────────
 router.get("/stories", authMiddleware, async (req, res) => {
   try {
     const stories = await Post.find({
@@ -90,7 +100,7 @@ router.get("/stories", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/posts/:id/like — toggle like
+// ── POST /api/posts/:id/like ──────────────────────────────────────
 router.post("/:id/like", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -112,7 +122,7 @@ router.post("/:id/like", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/posts/:id/view — mark story as viewed
+// ── POST /api/posts/:id/view ──────────────────────────────────────
 router.post("/:id/view", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -129,7 +139,7 @@ router.post("/:id/view", authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE /api/posts/:id — delete own post
+// ── DELETE /api/posts/:id ─────────────────────────────────────────
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -145,3 +155,12 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 });
 
 export default router;
+```
+
+---
+
+// ## Fix 2 — Add `BACKEND_URL` to Render environment variables
+
+Go to Render → Your service → **Environment** → Add:
+```
+BACKEND_URL = https://annomuss-backend.onrender.com
