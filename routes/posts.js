@@ -5,17 +5,15 @@ import fs from "fs";
 import { authMiddleware } from "../middleware/auth.js";
 import Post from "../models/Post.js";
 
-//
-
 const router = express.Router();
 
-// ── Create uploads dir if not exists ─────────────────────────────
+// Create uploads dir if not exists
 const uploadsDir = "uploads/";
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// ── Multer setup ──────────────────────────────────────────────────
+// Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -36,7 +34,7 @@ const upload = multer({
   }
 });
 
-// ── POST /api/posts ───────────────────────────────────────────────
+// POST /api/posts
 router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
   try {
     const { type, emotion, caption } = req.body;
@@ -76,7 +74,7 @@ router.post("/", authMiddleware, upload.single("media"), async (req, res) => {
   }
 });
 
-// ── GET /api/posts ────────────────────────────────────────────────
+// GET /api/posts
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const posts = await Post.find({ type: "post" })
@@ -88,7 +86,7 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// ── GET /api/posts/stories ────────────────────────────────────────
+// GET /api/posts/stories
 router.get("/stories", authMiddleware, async (req, res) => {
   try {
     const stories = await Post.find({
@@ -101,7 +99,7 @@ router.get("/stories", authMiddleware, async (req, res) => {
   }
 });
 
-// ── POST /api/posts/:id/like ──────────────────────────────────────
+// POST /api/posts/:id/like
 router.post("/:id/like", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -123,7 +121,7 @@ router.post("/:id/like", authMiddleware, async (req, res) => {
   }
 });
 
-// ── POST /api/posts/:id/view ──────────────────────────────────────
+// POST /api/posts/:id/view
 router.post("/:id/view", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -140,7 +138,7 @@ router.post("/:id/view", authMiddleware, async (req, res) => {
   }
 });
 
-// ── DELETE /api/posts/:id ─────────────────────────────────────────
+// DELETE /api/posts/:id
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -156,12 +154,3 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 });
 
 export default router;
-```
-
----
-
-// ## Fix 2 — Add `BACKEND_URL` to Render environment variables
-
-Go to Render → Your service → **Environment** → Add:
-```
-BACKEND_URL = https://annomuss-backend.onrender.com
