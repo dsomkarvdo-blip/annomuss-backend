@@ -7,9 +7,9 @@ const postSchema = new mongoose.Schema({
   caption: { type: String, default: "" },
   mediaUrl: { type: String, default: null },
   mediaType: { type: String, enum: ["image", "video", null], default: null },
-  likes: [{ type: String }], // anonymousNames who liked
-  views: [{ type: String }], // anonymousNames who viewed (for stories)
-  expiresAt: { type: Date, default: null }, // stories expire in 24h
+  likes: [{ type: String }],
+  views: [{ type: String }],
+  expiresAt: { type: Date, default: null },
 }, { timestamps: true });
 
 export default mongoose.model("Post", postSchema);
