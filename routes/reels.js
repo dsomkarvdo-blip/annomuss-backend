@@ -6,7 +6,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import { authMiddleware } from "../middleware/auth.js";
-import Reel from "../models/Reel.js";
+import Reel from "../models/reel.js";
 
 const router = express.Router();
 
